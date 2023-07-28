@@ -1,0 +1,40 @@
+import numpy as np
+from scipy import sparse
+from scipy.sparse.linalg import spsolve
+
+def solve_heat_equation(nx, ny, nt, alpha):
+    dx = 1.0 / (nx - 1)
+    dy = 1.0 / (ny - 1)
+    dt = 1.0 / nt
+
+    x = np.linspace(0, 1, nx)
+    y = np.linspace(0, 1, ny)
+
+    u = np.zeros((nx, ny))
+    u[:, 0] = 1  # Boundary condition: u(x, 0) = 1
+
+    for t in range(1, nt + 1):
+        u_old = u.copy()
+
+        A = sparse.diags([-1, 4, -1], [-1, 0, 1], shape=(nx, nx)).tocsr()
+        B = sparse.diags([-1, 4, -1], [-1, 0, 1], shape=(ny, ny)).tocsr()
+
+        F = np.dot(A, u_old) + np.dot(u_old, B)
+        u_new = spsolve(sparse.eye(nx * ny) - alpha * dt * (A + B), u_old.reshape(-1) + dt * F.reshape(-1))
+
+        u = u_new.reshape((nx, ny))
+
+    return x, y, u
+
+
+# Parameters
+nx = 51  # Number of grid points in x-direction
+ny = 51  # Number of grid points in y-direction
+nt = 100  # Number of time steps
+alpha = 0.01  # Diffusion coefficient
+
+# Solve the heat equation
+x, y, u = solve_heat_equation(nx, ny, nt, alpha)
+
+# Print the solution
+print(u)
